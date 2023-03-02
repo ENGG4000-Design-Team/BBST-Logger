@@ -14,9 +14,9 @@
 #include <ctime>
 
 #include <opencv2/opencv.hpp>
-// #include "cmps14.hpp"
-// #include <wiringPi.h>
-// #include <wiringSerial.h>
+#include "cmps14.hpp"
+#include <wiringPi.h>
+#include <wiringSerial.h>
 
 const std::string LOGFILE = "log.csv";
 std::mutex m_logfile;
@@ -54,8 +54,25 @@ void logfileWrite(const std::vector<std::string> &data)
 
 void IMUThread()
 {
-    std::vector<std::string> data{"heading: 213213", "pitch: 21312", "roll: 231"};
-    logfileWrite(data);
+    std::vector<std::string> data(3);
+
+    // Initiate IMU over serial connection
+    auto imu = new cmps14(false);
+    if (imu->begin() == -1)
+        return;
+
+    // Read IMU data and write to log file
+    float heading = 0.0f, pitch = 0.0f, roll = 0.0f;
+    while (1)
+    {
+        data[0] = "Heading: " + std::to_string(imu->getHeading());
+        data[1] = "Pitch: " + std::to_string(imu->getPitch());
+        data[2] = "Roll: " + std::to_string(imu->getRoll());
+        
+        logfileWrite(data);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 }
 
 void photodiodeThread()
