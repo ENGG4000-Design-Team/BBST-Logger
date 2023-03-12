@@ -21,6 +21,27 @@
 const std::string LOGFILE = "log.csv";
 std::mutex m_logfile;
 
+// Structure that represents the bytes being sent to the
+// motor controllers from IMU data.
+struct
+{
+    union
+    {
+        float heading;
+        uint8_t headingBuff[sizeof(float)];
+    };
+    union
+    {
+        float pitch;
+        uint8_t pitchBuff[sizeof(float)];
+    };
+    union
+    {
+        float roll;
+        uint8_t rollBuff[sizeof(float)];
+    };
+} IMUComm;
+
 // Write a vector of data to logfile as a comma separated line
 // with timestamp. vector holds strings, this might suck so review this.
 void logfileWrite(const std::vector<std::string> &data)
@@ -59,20 +80,66 @@ void IMUThread()
     // Initiate IMU over serial connection
     auto imu = new cmps14(false);
     if (imu->begin() == -1)
+    {
+        std::cerr << "Unable to initialize CMPS14 IMU over serial communication..." << std::endl;
         return;
+    }
 
-    // Read IMU data and write to log file
-    float heading = 0.0f, pitch = 0.0f, roll = 0.0f;
+    // Initialize serial communication to the motor controllers
+    int controllerFd = serialOpen("/dev/ttyACM0", 9600);
+    if (controllerFd == -1)
+    {
+        std::cerr << "Unable to initialize serial communication with gimbal controller. Please check serial port being used..." << std::endl;
+        return;
+    }
+
+    // Initialize WiringPi
+    if (wiringPiSetup() == -1)
+    {
+        serialClose(controllerFd);
+        std::cerr << "Unable to start WiringPi" << std::endl;
+        return;
+    }
+
+    // Main IMU loop
+    int i;
     while (1)
     {
-        data[0] = "Heading: " + std::to_string(imu->getHeading());
-        data[1] = "Pitch: " + std::to_string(imu->getPitch());
-        data[2] = "Roll: " + std::to_string(imu->getRoll());
-        
+        // Read data from IMU and store in IMUComm structure
+        IMUComm.heading = imu->getHeading();
+        IMUComm.pitch = imu->getPitch();
+        IMUComm.roll = imu->getRoll();
+
+        // Send data to motor controller by simpling sending the heading,
+        // pitch, and roll byte by byte. Each float is separated by a comma,
+        // and data transmission ends with a new line character.
+        for (i = 0; i < sizeof(float); i++)
+            serialPutchar(controllerFd, IMUComm.headingBuff[i]);
+
+        serialPutchar(controllerFd, ',');
+
+        for (i = 0; i < sizeof(float); i++)
+            serialPutchar(controllerFd, IMUComm.pitchBuff[i]);
+
+        serialPutchar(controllerFd, ',');
+
+        for (i = 0; i < sizeof(float); i++)
+            serialPutchar(controllerFd, IMUComm.rollBuff[i]);
+
+        serialPutchar(controllerFd, '\n');
+
+        // Generate the data array to send to log file
+        data[0] = "Heading: " + std::to_string(IMUComm.heading);
+        data[1] = "Pitch: " + std::to_string(IMUComm.pitch);
+        data[2] = "Roll: " + std::to_string(IMUComm.roll);
+
+        // Log data to logfile
         logfileWrite(data);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+
+    serialClose(controllerFd);
 }
 
 void photodiodeThread()
