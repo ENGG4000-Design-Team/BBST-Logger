@@ -86,7 +86,7 @@ void IMUThread()
     }
 
     // Initialize serial communication to the motor controllers
-    int controllerFd = serialOpen("/dev/ttyACM0", 9600);
+    int controllerFd = serialOpen("/dev/ttyACM0", 115200);
     if (controllerFd == -1)
     {
         std::cerr << "Unable to initialize serial communication with gimbal controller. Please check serial port being used..." << std::endl;
@@ -116,17 +116,11 @@ void IMUThread()
         for (i = 0; i < sizeof(float); i++)
             serialPutchar(controllerFd, IMUComm.headingBuff[i]);
 
-        serialPutchar(controllerFd, ',');
-
         for (i = 0; i < sizeof(float); i++)
             serialPutchar(controllerFd, IMUComm.pitchBuff[i]);
 
-        serialPutchar(controllerFd, ',');
-
         for (i = 0; i < sizeof(float); i++)
             serialPutchar(controllerFd, IMUComm.rollBuff[i]);
-
-        serialPutchar(controllerFd, ',');
 
         // Generate the data array to send to log file
         data[0] = "Heading: " + std::to_string(IMUComm.heading);
