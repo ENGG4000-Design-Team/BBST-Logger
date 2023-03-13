@@ -126,7 +126,7 @@ void IMUThread()
         for (i = 0; i < sizeof(float); i++)
             serialPutchar(controllerFd, IMUComm.rollBuff[i]);
 
-        serialPutchar(controllerFd, '\n');
+        serialPutchar(controllerFd, ',');
 
         // Generate the data array to send to log file
         data[0] = "Heading: " + std::to_string(IMUComm.heading);
