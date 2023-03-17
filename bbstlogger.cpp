@@ -117,25 +117,25 @@ void IMUThread()
         sunPos = location.getSolarPosition(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
         // Read data from IMU and store in IMUComm structure
-        IMUComm.heading = sunPos.azimuth - imu->getHeading();
-        IMUComm.pitch = sunPos.elevation - imu->getPitch();
+        IMUComm.headingCorr = sunPos.azimuth - imu->getHeading();
+        IMUComm.pitchCorr = sunPos.elevation - imu->getPitch();
         IMUComm.roll = imu->getRoll();
 
         // Send data to motor controller by simpling sending the heading,
         // pitch, and roll byte by byte. Each float is separated by a comma,
         // and data transmission ends with a new line character.
         for (i = 0; i < sizeof(float); i++)
-            serialPutchar(controllerFd, IMUComm.headingBuff[i]);
+            serialPutchar(controllerFd, IMUComm.headingCorrBuff[i]);
 
         for (i = 0; i < sizeof(float); i++)
-            serialPutchar(controllerFd, IMUComm.pitchBuff[i]);
+            serialPutchar(controllerFd, IMUComm.pitchCorrBuff[i]);
 
         for (i = 0; i < sizeof(float); i++)
             serialPutchar(controllerFd, IMUComm.rollBuff[i]);
 
         // Generate the data array to send to log file
-        data[0] = "Heading Correction: " + std::to_string(IMUComm.heading);
-        data[1] = "Pitch Correction: " + std::to_string(IMUComm.pitch);
+        data[0] = "Heading Correction: " + std::to_string(IMUComm.headingCorr);
+        data[1] = "Pitch Correction: " + std::to_string(IMUComm.pitchCorr);
         data[2] = "Roll: " + std::to_string(IMUComm.roll);
 
         // Log data to logfile

@@ -13,10 +13,10 @@
 
 const float KM_PER_AU = 149597870.7;  //kilometers per astronomical unit
 
-const float RAD_TO_DEG 57.29577951;
-const float DEG_TO_RAD 0.01745329;
-const float PI 3.141592654;
-const float TWO_PI 6.28318531;
+const float RAD_TO_DEG = 57.29577951;
+const float DEG_TO_RAD = 0.01745329;
+const float PI = 3.141592654;
+const float TWO_PI = 6.28318531;
 
 typedef time_t(*getExternalTime)();
 
