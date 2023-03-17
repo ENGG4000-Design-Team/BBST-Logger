@@ -10,6 +10,7 @@
 
 #include <chrono>
 #include <time.h>
+#include <cmath>
 
 const float KM_PER_AU = 149597870.7;  //kilometers per astronomical unit
 
