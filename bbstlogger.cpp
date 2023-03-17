@@ -14,26 +14,29 @@
 #include <ctime>
 
 #include <opencv2/opencv.hpp>
-#include "cmps14.hpp"
+#include <cmps14.hpp>
 #include <wiringPi.h>
 #include <wiringSerial.h>
+
+#include "SolarPosition.h"
 
 const std::string LOGFILE = "log.csv";
 std::mutex m_logfile;
 
 // Structure that represents the bytes being sent to the
-// motor controllers from IMU data.
+// motor controllers from IMU data. This data is the heading correction
+// angle, the pitch correction angle, and the roll angle.
 struct
 {
     union
     {
-        float heading;
-        uint8_t headingBuff[sizeof(float)];
+        float headingCorr;
+        uint8_t headingCorrBuff[sizeof(float)];
     };
     union
     {
-        float pitch;
-        uint8_t pitchBuff[sizeof(float)];
+        float pitchCorr;
+        uint8_t pitchCorrBuff[sizeof(float)];
     };
     union
     {
@@ -101,13 +104,21 @@ void IMUThread()
         return;
     }
 
+    // TODO: We will need to calculate this on the fly in flight
+    SolarPosition location(45.944962483507844, -66.64841312244609);
+
     // Main IMU loop
     int i;
+    SolarPosition_t sunPos;
+    float heading = 0.0f, pitch = 0.0f;
     while (1)
     {
+        // Calculate location of Sun at current point in time
+        sunPos = location.getSolarPosition(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
         // Read data from IMU and store in IMUComm structure
-        IMUComm.heading = imu->getHeading();
-        IMUComm.pitch = imu->getPitch();
+        IMUComm.heading = sunPos.azimuth - imu->getHeading();
+        IMUComm.pitch = sunPos.elevation - imu->getPitch();
         IMUComm.roll = imu->getRoll();
 
         // Send data to motor controller by simpling sending the heading,
@@ -123,8 +134,8 @@ void IMUThread()
             serialPutchar(controllerFd, IMUComm.rollBuff[i]);
 
         // Generate the data array to send to log file
-        data[0] = "Heading: " + std::to_string(IMUComm.heading);
-        data[1] = "Pitch: " + std::to_string(IMUComm.pitch);
+        data[0] = "Heading Correction: " + std::to_string(IMUComm.heading);
+        data[1] = "Pitch Correction: " + std::to_string(IMUComm.pitch);
         data[2] = "Roll: " + std::to_string(IMUComm.roll);
 
         // Log data to logfile

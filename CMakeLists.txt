@@ -11,7 +11,7 @@ project(
     LANGUAGES CXX
 )
 
-add_executable(bbstlogger bbstlogger.cpp)
+add_executable(bbstlogger bbstlogger.cpp SolarPosition.cpp)
 
 set_target_properties(bbstlogger PROPERTIES
     CXX_STANDARD 20
