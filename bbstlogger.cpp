@@ -78,8 +78,6 @@ void logfileWrite(const std::vector<std::string> &data)
 
 void IMUThread()
 {
-    std::vector<std::string> data(3);
-
     // Initiate IMU over serial connection
     auto imu = new cmps14(false);
     if (imu->begin() == -1)
@@ -111,6 +109,7 @@ void IMUThread()
     int i;
     SolarPosition_t sunPos;
     float heading = 0.0f, pitch = 0.0f;
+    std::vector<std::string> data(3);
     while (1)
     {
         // Calculate location of Sun at current point in time
@@ -141,9 +140,12 @@ void IMUThread()
         // Log data to logfile
         logfileWrite(data);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        // TODO: Experimentally determine lower limit on delay between loops
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
+    // TODO: Need to close this in a signal handler since
+    // this is never reached...
     serialClose(controllerFd);
 }
 
@@ -163,13 +165,13 @@ int main()
 {
     // Launch threads
     std::thread t_imu(IMUThread);
-    std::thread t_photodiode(photodiodeThread);
-    std::thread t_imgProc(imgProcThread);
+    //std::thread t_photodiode(photodiodeThread);
+    //std::thread t_imgProc(imgProcThread);
 
     // Join threads
     t_imu.join();
-    t_photodiode.join();
-    t_imgProc.join();
+    //t_photodiode.join();
+    //t_imgProc.join();
 
     return 1;
 }
