@@ -126,11 +126,17 @@ void IMUThread()
         for (i = 0; i < sizeof(float); i++)
             serialPutchar(controllerFd, IMUComm.headingCorrBuff[i]);
 
+        serialPutchar(controllerFd, ',');
+
         for (i = 0; i < sizeof(float); i++)
             serialPutchar(controllerFd, IMUComm.pitchCorrBuff[i]);
 
+        serialPutchar(controllerFd, ',');
+
         for (i = 0; i < sizeof(float); i++)
             serialPutchar(controllerFd, IMUComm.rollBuff[i]);
+
+        serialPutchar(controllerFd, ',');
 
         // Generate the data array to send to log file
         data[0] = "Heading Correction: " + std::to_string(IMUComm.headingCorr);
@@ -141,7 +147,7 @@ void IMUThread()
         logfileWrite(data);
 
         // TODO: Experimentally determine lower limit on delay between loops
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     // TODO: Need to close this in a signal handler since
