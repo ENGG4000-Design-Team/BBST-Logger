@@ -18,7 +18,7 @@
 #include <wiringPi.h>
 #include <wiringSerial.h>
 
-#include "SolarPosition.h"
+#include "sun_pos.h"
 
 const std::string LOGFILE = "log.csv";
 std::mutex m_logfile;
