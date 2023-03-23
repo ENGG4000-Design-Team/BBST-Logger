@@ -201,6 +201,9 @@ void photodiodeThread()
     ads.setGain(GAIN_ONE);
     ads.begin();
 
+    uint16_t maxVal = 0x0000;
+    std::vector<int> maxPos{0, 0};
+    std::vector<int> moveVect{0, 0};
     while (1)
     {
         for (const auto &[key, val] : photodiodeIdx)
@@ -221,24 +224,26 @@ void photodiodeThread()
             photodiodes[val[0]][val[1]] = ads.readADC_SingleEnded(0);
         }
 
-        // print matrix
-        std::cout << std::showbase
-                  << std::internal
-                  << std::setfill('0');
-
-        std::cout << "-----------------------------------------------------------" << std::endl;
-
-        for (const auto &row : photodiodes)
+        // Find maximum photodiode value and its index in array
+        for (int i = 0; i < PHOTODIODE_ARRAY_Y; i++)
         {
-            for (const auto &col : row)
+            auto rowMax = std::max_element(photodiodes[i], photodiodes[i] + PHOTODIODE_ARRAY_X);
+            if (*rowMax > maxVal)
             {
-                std::cout << std::hex << std::setw(6) << col << " ";
+                maxPos[0] = i;
+                maxPos[1] = std::distance(photodiodes[i], rowMax);
+                maxVal = *rowMax;
             }
-            std::cout << std::endl
-                      << std::endl;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        // Multiply by -1 so up is positive and down is negative.
+        vect[0] = maxPos[1] - ceil(PHOTODIODE_ARRAY_X / 2);
+        vect[1] = -1 * (maxPos[0] - ceil(PHOTODIODE_ARRAY_Y / 2));
+
+        std::cout << "Max Photodiode at " << maxPos[0] << ", " << maxPos[1] << " intensity: " << maxVal << std::endl;
+        std::cout << "Vector to center: " << vect[0] << ", " << vect[1] << std::endl;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
 
