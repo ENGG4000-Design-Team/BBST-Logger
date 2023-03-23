@@ -114,8 +114,8 @@ void IMUThread()
         calcSunPos(elevation, azimuth, longitude, latitude);
 
         // Read data from IMU and store in IMUComm structure
-        IMUComm.headingCorr = sunPos.azimuth - imu->getHeading();
-        IMUComm.pitchCorr = sunPos.elevation - imu->getPitch();
+        IMUComm.headingCorr = azimuth - imu->getHeading();
+        IMUComm.pitchCorr = elevation - imu->getPitch();
         IMUComm.roll = imu->getRoll();
 
         // Send data to motor controller by simpling sending the heading,
