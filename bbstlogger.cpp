@@ -91,6 +91,14 @@ void IMUThread()
         return;
     }
 
+    std::cout << "IMU Software Version: " << imu->getSoftwareVersion() << std::endl;
+    std::vector<int> calStatus = imu->getCalibrationStatus();
+    std::cout << "IMU Calibration State: " << std::endl
+              << "\tSystem: " << calStatus[3] << std::endl
+              << "\tGyroscope: " << calStatus[2] << std::endl
+              << "\tAccelerometer: " << calStatus[1] << std::endl
+              << "\tMagnotometer: " << calStatus[0] << std::endl;
+
     // Initialize serial communication to the motor controllers
     int controllerFd = serialOpen("/dev/ttyACM0", 115200);
     if (controllerFd == -1)
@@ -137,6 +145,8 @@ void IMUThread()
         data[0] = "Heading Correction: " + std::to_string(IMUComm.headingCorr);
         data[1] = "Pitch Correction: " + std::to_string(IMUComm.pitchCorr);
         data[2] = "Roll: " + std::to_string(IMUComm.roll);
+
+        std::cout << "Sent: " << IMUComm.headingCorr << ", " << IMUComm.pitchCorr << std::endl;
 
         // Log data to logfile
         // logfileWrite(data);
