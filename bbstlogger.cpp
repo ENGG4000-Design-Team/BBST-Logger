@@ -50,26 +50,6 @@ struct
     };
 } IMUComm;
 
-// Print matrix nicely. Used in photodiode thread.
-void printMat()
-{
-    std::cout << std::showbase
-              << std::internal
-              << std::setfill('0');
-
-    std::cout << "-----------------------------------------------------------" << std::endl;
-
-    for (const auto &row : photodiodes)
-    {
-        for (const auto &col : row)
-        {
-            std::cout << std::hex << std::setw(6) << col << " ";
-        }
-        std::cout << std::endl
-                  << std::endl;
-    }
-}
-
 // Write a vector of data to logfile as a comma separated line
 // with timestamp. vector holds strings, this might suck so review this.
 void logfileWrite(const std::vector<std::string> &data)
@@ -241,7 +221,23 @@ void photodiodeThread()
             photodiodes[val[0]][val[1]] = ads.readADC_SingleEnded(0);
         }
 
-        printMat();
+        // print matrix
+        std::cout << std::showbase
+                  << std::internal
+                  << std::setfill('0');
+
+        std::cout << "-----------------------------------------------------------" << std::endl;
+
+        for (const auto &row : photodiodes)
+        {
+            for (const auto &col : row)
+            {
+                std::cout << std::hex << std::setw(6) << col << " ";
+            }
+            std::cout << std::endl
+                      << std::endl;
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
@@ -258,7 +254,7 @@ int main()
     if (wiringPiSetup() == -1)
     {
         std::cerr << "Unable to start WiringPi" << std::endl;
-        return;
+        return 1;
     }
 
     // Launch threads
@@ -271,5 +267,5 @@ int main()
     // t_photodiode.join();
     // t_imgProc.join();
 
-    return 1;
+    return 0;
 }
