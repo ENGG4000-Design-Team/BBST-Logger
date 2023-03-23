@@ -237,11 +237,11 @@ void photodiodeThread()
         }
 
         // Multiply by -1 so up is positive and down is negative.
-        vect[0] = maxPos[1] - ceil(PHOTODIODE_ARRAY_X / 2);
-        vect[1] = -1 * (maxPos[0] - ceil(PHOTODIODE_ARRAY_Y / 2));
+        moveVect[0] = maxPos[1] - ceil(PHOTODIODE_ARRAY_X / 2);
+        moveVect[1] = -1 * (maxPos[0] - ceil(PHOTODIODE_ARRAY_Y / 2));
 
         std::cout << "Max Photodiode at " << maxPos[0] << ", " << maxPos[1] << " intensity: " << maxVal << std::endl;
-        std::cout << "Vector to center: " << vect[0] << ", " << vect[1] << std::endl;
+        std::cout << "Vector to center: " << moveVect[0] << ", " << moveVect[1] << std::endl;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
