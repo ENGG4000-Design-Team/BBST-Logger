@@ -102,18 +102,16 @@ void IMUThread()
         return;
     }
 
-    // TODO: We will need to calculate this on the fly in flight
-    SolarPosition location(45.944962483507844, -66.64841312244609);
-
     // Main IMU loop
     int i;
-    SolarPosition_t sunPos;
-    float heading = 0.0f, pitch = 0.0f;
+    float azimuth = 0.0f, elevation = 0.0f;
+    float latitude = 45.944962483507844;
+    float longitude = -66.64841312244609;
     std::vector<std::string> data(3);
     while (1)
     {
         // Calculate location of Sun at current point in time
-        sunPos = location.getSolarPosition(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+        calcSunPos(elevation, azimuth, longitude, latitude);
 
         // Read data from IMU and store in IMUComm structure
         IMUComm.headingCorr = sunPos.azimuth - imu->getHeading();
