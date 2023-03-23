@@ -11,7 +11,9 @@ project(
     LANGUAGES CXX
 )
 
-add_executable(bbstlogger bbstlogger.cpp sun_pos.cpp)
+set(ADSLIB "/home/bbst/bbst/Adafruit_ADS1X15_RPi/")
+
+add_executable(bbstlogger bbstlogger.cpp sun_pos.cpp ${ADSLIB}/Adafruit_ADS1015.cpp)
 
 set_target_properties(bbstlogger PROPERTIES
     CXX_STANDARD 20
@@ -29,6 +31,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${ADSLIB})
 
 find_library(WIRINGPI_LIBRARIES NAMES wiringPi)
 find_library(CMPS14_LIBRARIES NAMES cmps14)

@@ -18,6 +18,8 @@
 #include <wiringPi.h>
 #include <wiringSerial.h>
 
+#include "Adafruit_ADS1015.h"
+
 #include "sun_pos.h"
 
 const std::string LOGFILE = "log.csv";
