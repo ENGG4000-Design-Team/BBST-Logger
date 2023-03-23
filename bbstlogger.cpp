@@ -142,7 +142,7 @@ void IMUThread()
         data[2] = "Roll: " + std::to_string(IMUComm.roll);
 
         // Log data to logfile
-        logfileWrite(data);
+        //logfileWrite(data);
 
         // TODO: Experimentally determine lower limit on delay between loops
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
