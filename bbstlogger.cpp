@@ -29,19 +29,28 @@ const std::string LOGFILE = "log.csv";
 std::mutex m_logfile;
 
 // Structure that represents the bytes being sent to the
-// motor controllers from IMU data. This data is the heading correction
-// angle, the pitch correction angle, and the roll angle.
+// motor controllers from IMU data.
 struct
 {
     union
     {
-        float headingCorr;
-        uint8_t headingCorrBuff[sizeof(float)];
+        float azimuth;
+        uint8_t azimuthBuff[sizeof(float)];
     };
     union
     {
-        float pitchCorr;
-        uint8_t pitchCorrBuff[sizeof(float)];
+        float elevation;
+        uint8_t elevationBuff[sizeof(float)];
+    };
+    union
+    {
+        float heading;
+        uint8_t headingBuff[sizeof(float)];
+    };
+    union
+    {
+        float pitch;
+        uint8_t pitchBuff[sizeof(float)];
     };
     union
     {
@@ -49,6 +58,38 @@ struct
         uint8_t rollBuff[sizeof(float)];
     };
 } IMUComm;
+
+// Send data stored in IMUComm to motor controller by
+// by sending each float byte by byte. Each float will be
+// separated by a comma in the communication stream.
+void sendIMUComm(int controllerFd)
+{
+    int i;
+    /*for (i = 0; i < sizeof(float); i++)
+        serialPutchar(controllerFd, IMUComm.azimuthBuff[i]);
+
+    serialPutchar(controllerFd, ',');
+
+    for (i = 0; i < sizeof(float); i++)
+        serialPutchar(controllerFd, IMUComm.elevationBuff[i]);
+
+    serialPutchar(controllerFd, ',');*/
+
+    for (i = 0; i < sizeof(float); i++)
+        serialPutchar(controllerFd, IMUComm.headingBuff[i]);
+
+    serialPutchar(controllerFd, ',');
+
+    for (i = 0; i < sizeof(float); i++)
+        serialPutchar(controllerFd, IMUComm.pitchBuff[i]);
+
+    serialPutchar(controllerFd, ',');
+
+    for (i = 0; i < sizeof(float); i++)
+        serialPutchar(controllerFd, IMUComm.rollBuff[i]);
+
+    serialPutchar(controllerFd, ',');
+}
 
 // Write a vector of data to logfile as a comma separated line
 // with timestamp. vector holds strings, this might suck so review this.
@@ -108,45 +149,30 @@ void IMUThread()
     }
 
     // Main IMU loop
-    int i;
-    float azimuth = 0.0f, elevation = 0.0f;
+    // TODO: During flight these position values will change on each iteration
     float latitude = 45.944962483507844;
     float longitude = -66.64841312244609;
-    std::vector<std::string> data(3);
+    std::vector<std::string> data(5);
     while (1)
     {
         // Calculate location of Sun at current point in time
-        calcSunPos(elevation, azimuth, longitude, latitude);
+        calcSunPos(IMUComm.elevation, IMUComm.azimuth, longitude, latitude);
 
         // Read data from IMU and store in IMUComm structure
-        IMUComm.headingCorr = azimuth - imu->getHeading();
-        IMUComm.pitchCorr = elevation - imu->getPitch();
+        IMUComm.heading = imu->getHeading();
+        IMUComm.pitch = imu->getPitch();
         IMUComm.roll = imu->getRoll();
 
-        // Send data to motor controller by simpling sending the heading,
-        // pitch, and roll byte by byte. Each float is separated by a comma,
-        // and data transmission ends with a new line character.
-        for (i = 0; i < sizeof(float); i++)
-            serialPutchar(controllerFd, IMUComm.headingCorrBuff[i]);
-
-        serialPutchar(controllerFd, ',');
-
-        for (i = 0; i < sizeof(float); i++)
-            serialPutchar(controllerFd, IMUComm.pitchCorrBuff[i]);
-
-        serialPutchar(controllerFd, ',');
-
-        for (i = 0; i < sizeof(float); i++)
-            serialPutchar(controllerFd, IMUComm.rollBuff[i]);
-
-        serialPutchar(controllerFd, ',');
+        sendIMUComm(controllerFd);
 
         // Generate the data array to send to log file
-        data[0] = "Heading Correction: " + std::to_string(IMUComm.headingCorr);
-        data[1] = "Pitch Correction: " + std::to_string(IMUComm.pitchCorr);
-        data[2] = "Roll: " + std::to_string(IMUComm.roll);
+        data[0] = "Sun Azimuth: " + std::to_string(IMUComm.azimuth);
+        data[1] = "Sun Elevation: " + std::to_string(IMUComm.elevation);
+        data[2] = "IMU Heading: " + std::to_string(IMUComm.heading);
+        data[3] = "IMU Pitch: " + std::to_string(IMUComm.pitch);
+        data[4] = "IMU Roll: " + std::to_string(IMUComm.roll);
 
-        std::cout << "Sent: " << IMUComm.headingCorr << ", " << IMUComm.pitchCorr << std::endl;
+        std::cout << "Sent: " << IMUComm.heading << ", " << IMUComm.pitch << ", " << IMUComm.roll << std::endl;
 
         // Log data to logfile
         // logfileWrite(data);
