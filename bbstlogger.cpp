@@ -152,6 +152,7 @@ void IMUThread()
     // TODO: During flight these position values will change on each iteration
     float latitude = 45.944962483507844;
     float longitude = -66.64841312244609;
+    float prevHeading = 0.0f, prevPitch = 0.0f, prevRoll = 0.0f;
     std::vector<std::string> data(5);
     while (1)
     {
@@ -159,21 +160,32 @@ void IMUThread()
         calcSunPos(IMUComm.elevation, IMUComm.azimuth, longitude, latitude);
 
         // Read data from IMU and store in IMUComm structure
+        // Experimenting with a weighted reading based off previous value
+        // to provide better smoothing.
         IMUComm.heading = imu->getHeading();
         IMUComm.heading = (IMUComm.heading != 0.0f) ? IMUComm.heading : 0.1f;
+        IMUComm.heading = (prevHeading != 0.0f) ? 0.8 * IMUComm.heading + 0.2 * prevHeading : IMUComm.heading;
+
         IMUComm.pitch = imu->getPitch();
         IMUComm.pitch = (IMUComm.pitch != 0.0f) ? IMUComm.pitch : 0.1f;
+        IMUComm.pitch = (prevPitch != 0.0f) ? 0.8 * IMUComm.pitch + 0.2 * prevPitch : IMUComm.pitch;
+
         IMUComm.roll = imu->getRoll();
         IMUComm.roll = (IMUComm.roll != 0.0f) ? IMUComm.roll : 0.1f;
+        IMUComm.roll = (prevRoll != 0.0f) ? 0.8 * IMUComm.roll + 0.2 * prevRoll : IMUComm.roll;
 
         sendIMUComm(controllerFd);
 
+        prevHeading = IMUComm.heading;
+        prevPitch = IMUComm.pitch;
+        prevRoll = IMUComm.roll;
+
         // Generate the data array to send to log file
-        data[0] = "Sun Azimuth: " + std::to_string(IMUComm.azimuth);
-        data[1] = "Sun Elevation: " + std::to_string(IMUComm.elevation);
-        data[2] = "IMU Heading: " + std::to_string(IMUComm.heading);
-        data[3] = "IMU Pitch: " + std::to_string(IMUComm.pitch);
-        data[4] = "IMU Roll: " + std::to_string(IMUComm.roll);
+        //data[0] = "Sun Azimuth: " + std::to_string(IMUComm.azimuth);
+        //data[1] = "Sun Elevation: " + std::to_string(IMUComm.elevation);
+        //data[2] = "IMU Heading: " + std::to_string(IMUComm.heading);
+        //data[3] = "IMU Pitch: " + std::to_string(IMUComm.pitch);
+        //data[4] = "IMU Roll: " + std::to_string(IMUComm.roll);
 
         std::cout << "Sent: " << IMUComm.azimuth << ", " << IMUComm.elevation << ", " << IMUComm.heading << ", " << IMUComm.pitch << ", " << IMUComm.roll << std::endl;
 
@@ -181,7 +193,7 @@ void IMUThread()
         // logfileWrite(data);
 
         // TODO: Experimentally determine lower limit on delay between loops
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 
     // TODO: Need to close this in a signal handler since
