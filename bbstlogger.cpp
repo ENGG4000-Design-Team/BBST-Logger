@@ -210,6 +210,20 @@ void photodiodeThread()
     // GPIO pins we are using to control multiplexer channels
     int pins[4] = {1, 2, 3, 4};
 
+    // Map multiplexer channel bits to photodiode data array where
+    // index 0 is its x distance from center, index 1 is its y distance
+    // from center, and index 2 is its intensity value
+    std::map<uint8_t, std::vector<int>> photodiodes{
+        {0x00, {0, 2, 0}},   // 0b0000 corresponds to photodiode D1
+        {0x01, {1, 1, 0}},   // 0b0001 corresponds to photodiode D2
+        {0x02, {2, 0, 0}},   // 0b0010 corresponds to photodiode D3
+        {0x03, {1, -1, 0}},  // 0b0011 corresponds to photodiode D4
+        {0x04, {0, -2, 0}},  // 0b0100 corresponds to photodiode D5
+        {0x05, {-1, -1, 0}}, // 0b0101 corresponds to photodiode D6
+        {0x0A, {-2, 0, 0}},  // 0b1010 corresponds to photodiode D7
+        {0x0B, {-1, 1, 0}},  // 0b1011 corresponds to photodiode D8
+    };
+
     // Map the multiplexer channel bits to the corresponding
     // index on the photodiodes array below.
     std::map<uint8_t, std::vector<int>> photodiodeIdx{
@@ -235,12 +249,12 @@ void photodiodeThread()
     //      D7 => photodiodes[2][0]
     //      D8 => photodiodes[1][1]
     // All other values in between are zeros and disgarded in processing.
-    uint16_t photodiodes[PHOTODIODE_ARRAY_Y][PHOTODIODE_ARRAY_X] = {
+    /*uint16_t photodiodes[PHOTODIODE_ARRAY_Y][PHOTODIODE_ARRAY_X] = {
         {0x0000, 0x0000, 0x0000, 0x0000, 0x0000},
         {0x0000, 0x0000, 0x0000, 0x0000, 0x0000},
         {0x0000, 0x0000, 0x0000, 0x0000, 0x0000},
         {0x0000, 0x0000, 0x0000, 0x0000, 0x0000},
-        {0x0000, 0x0000, 0x0000, 0x0000, 0x0000}};
+        {0x0000, 0x0000, 0x0000, 0x0000, 0x0000}};*/
 
     // Store photodiode values for finding max and min
     uint16_t photodiodeValues[NPHOTODIODES] = {
@@ -267,13 +281,14 @@ void photodiodeThread()
 
     int i = 0, norm = 0;
     int centerX = ceil(PHOTODIODE_ARRAY_X / 2), centerY = ceil(PHOTODIODE_ARRAY_Y / 2);
-    uint16_t maxVal1 = 0x0000, maxVal2 = 0x0000, value = 0x0000;
-    std::vector<int> maxPos1{0, 0}, maxPos2{0, 0};
+    uint16_t value = 0x0000;
+    //uint16_t maxVal1 = 0x0000, maxVal2 = 0x0000, value = 0x0000;
+    std::vector<int> maxVal1{0, 0, 0}, maxVal2{0, 0, 0};
     std::vector<int> moveVect{0, 0};
     while (1)
     {
         i = 0;
-        for (const auto &[key, val] : photodiodeIdx)
+        for (const auto &[key, val] : photodiodes)
         {
             // Write key to GPIO pins to select particular photodiode
             for (int i = 0; i < 4; i++)
@@ -281,19 +296,14 @@ void photodiodeThread()
                 digitalWrite(pins[i], (key >> i) & 0x01);
             }
 
-            // TODO: Is this needed?
-            // Sleep for 1ms for good measuer
+            // Sleep for 1ms for good luck
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-            // Read value from adc
+            // Read value from adc and store
             // TODO: Double check all values are coming from A0,
             // or else we need to keep track of that too
             value = ads.readADC_SingleEnded(0);
-
-            // Store value in photodiodes matrix
-            photodiodes[val[0]][val[1]] = value;
-
-            // Store value in photodiode value array
+            val[2] = value;
             photodiodeValues[i++] = value;
         }
 
@@ -308,42 +318,27 @@ void photodiodeThread()
 
         norm /= (NPHOTODIODES / 2);
 
-        for (auto &[key, val] : photodiodeIdx)
-        {
-            photodiodes[val[0]][val[1]] -= norm;
-        }
-
-        // TODO: We might be able to rewrite the below function
-        // now that we have the sorted array of intensities
-
         // Find two maximum photodiode values and their indicies in array
-        maxVal1 = 0x0000;
-        maxVal2 = 0x0000;
-        for (i = 0; i < PHOTODIODE_ARRAY_Y; i++)
+        maxVal1[2] = 0;
+        maxVal2[2] = 0;
+        for (auto &[key, val] : photodiodes)
         {
-            auto rowMax = std::max_element(photodiodes[i], photodiodes[i] + PHOTODIODE_ARRAY_X);
-            if (*rowMax > maxVal1)
+            val[2] -= norm;
+            if (val[2] > maxVal1[2])
             {
                 maxVal2 = maxVal1;
-                maxPos2[0] = maxPos1[0];
-                maxPos2[1] = maxPos1[1];
-
-                maxPos1[0] = std::distance(photodiodes[i], rowMax);
-                maxPos1[1] = i;
-                maxVal1 = *rowMax;
+                maxVal1 = val;
             }
-            else if (*rowMax > maxVal2)
+            else if (val[2] > maxVal2[2])
             {
-                maxPos2[0] = std::distance(photodiodes[i], rowMax);
-                maxPos2[1] = i;
-                maxVal2 = *rowMax;
+                maxVal2 = val;
             }
         }
 
-        moveVect[0] = (maxPos1[0] - centerX) * maxVal1 + (maxPos2[0] - centerX) * maxVal2;
-        moveVect[1] = (-1 * maxPos1[1] - centerY) * maxVal1 + (-1 * maxPos2[1] - centerY) * maxVal2;
+        moveVect[0] = (maxVal1[0] - centerX) * maxVal1[2] + (maxVal2[0] - centerX) * maxVal2[2];
+        moveVect[1] = (-1 * maxVal1[1] - centerY) * maxVal1[2] + (-1 * maxVal2[1] - centerY) * maxVal2[2];
 
-        double temp = tan(moveVect[1]/moveVect[0]);
+        double temp = tan(moveVect[1] / moveVect[0]);
 
         std::cout << "Max1 " << maxPos1[0] << "," << maxPos1[1] << ": " << maxVal1 << std::endl;
         std::cout << "Max2 " << maxPos2[0] << "," << maxPos2[1] << ": " << maxVal2 << std::endl;
