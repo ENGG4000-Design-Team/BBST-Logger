@@ -282,7 +282,7 @@ void photodiodeThread()
     int i = 0, norm = 0;
     uint16_t value = 0x0000;
     std::vector<int> maxVal1{0, 0, 0}, maxVal2{0, 0, 0};
-    std::vector<int> moveVect{0, 0};
+    std::vector<float> moveVect{0, 0};
     while (1)
     {
         i = 0;
@@ -333,8 +333,8 @@ void photodiodeThread()
             }
         }
 
-        moveVect[0] = maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2];
-        moveVect[1] = maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2];
+        moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]) / 21.4f;
+        moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]) / 21.4f;
 
         double temp = tan(moveVect[1] / moveVect[0]);
 
