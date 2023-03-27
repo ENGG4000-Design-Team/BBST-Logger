@@ -341,9 +341,9 @@ void photodiodeThread()
 
         IMUComm.azimuth = 181 + tempX;
         IMUComm.elevation = 41 + tempY;
-        IMUComm.heading = 0.0f;
-        IMUComm.pitch = 0.0f;
-        IMUComm.roll = 0.0f;
+        IMUComm.heading = 0.1f;
+        IMUComm.pitch = 0.1f;
+        IMUComm.roll = 0.1f;
 
         auto end = std::chrono::high_resolution_clock::now();
 
