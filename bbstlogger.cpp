@@ -347,6 +347,7 @@ void photodiodeThread()
 
         std::cout << "Max1 " << maxPos1[0] << "," << maxPos1[1] << ": " << maxVal1 << std::endl;
         std::cout << "Max2 " << maxPos2[0] << "," << maxPos2[1] << ": " << maxVal2 << std::endl;
+        std::cout << "Move Vect: " << moveVect[0] << ", " << moveVect[1] << std::endl;
         std::cout << "Heading correction: " << temp << std::endl;
         // std::cout << "Max Photodiode at " << maxPos[0] << ", " << maxPos[1] << " intensity: " << maxVal << std::endl;
         // std::cout << "Vector to center: " << moveVect[0] << ", " << moveVect[1] << std::endl;
