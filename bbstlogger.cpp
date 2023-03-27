@@ -333,17 +333,27 @@ void photodiodeThread()
             }
         }
 
-        moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]) / 21.4f;
-        moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]) / 21.4f;
+        moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]);
+        moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]);
 
-        double temp = tan(moveVect[1] / moveVect[0]);
+        float theta = atan(moveVect[1] / moveVect[0]);
 
-        std::cout << "Max1 " << maxVal1[0] << "," << maxVal1[1] << ": " << maxVal1[2] << std::endl;
-        std::cout << "Max2 " << maxVal2[0] << "," << maxVal2[1] << ": " << maxVal2[2] << std::endl;
-        std::cout << "Move Vect: " << moveVect[0] << ", " << moveVect[1] << std::endl;
-        std::cout << "Heading correction: " << temp << std::endl;
-        // std::cout << "Max Photodiode at " << maxPos[0] << ", " << maxPos[1] << " intensity: " << maxVal << std::endl;
-        // std::cout << "Vector to center: " << moveVect[0] << ", " << moveVect[1] << std::endl;
+        moveVect[0] = 0.89 * cos(theta);
+        moveVect[1] = 0.89 * sin(theta);
+
+        float tempX = atan(moveVect[0] / 21.4f);
+        float tempY = atan(moveVect[1] / 21.4f);
+
+        std::cout << "TempX: " << tempX << ", TempY: " << tempY << std::endl;
+
+        // float tempx = sqrt(moveVect[0] * moveVect[0] + moveVect[1] * moveVect[1]);
+
+        // std::cout << "Max1 " << maxVal1[0] << "," << maxVal1[1] << ": " << maxVal1[2] << std::endl;
+        // std::cout << "Max2 " << maxVal2[0] << "," << maxVal2[1] << ": " << maxVal2[2] << std::endl;
+        // std::cout << "Move Vect: " << moveVect[0] << ", " << moveVect[1] << std::endl;
+        // std::cout << "Heading correction: " << temp << std::endl;
+        //  std::cout << "Max Photodiode at " << maxPos[0] << ", " << maxPos[1] << " intensity: " << maxVal << std::endl;
+        //  std::cout << "Vector to center: " << moveVect[0] << ", " << moveVect[1] << std::endl;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
