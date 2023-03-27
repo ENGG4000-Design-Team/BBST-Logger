@@ -25,6 +25,8 @@
 
 #include "sun_pos.h"
 
+#define PI 3.14159265358979323846
+
 const std::string LOGFILE = "log.csv";
 std::mutex m_logfile;
 int motorControllerFd;
@@ -274,6 +276,8 @@ void photodiodeThread()
     std::vector<float> moveVect{0, 0};
     while (1)
     {
+        auto start = std::chrono::high_resolution_clock::now();
+
         i = 0;
         for (auto &[key, val] : photodiodes)
         {
@@ -325,18 +329,27 @@ void photodiodeThread()
         moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]);
         moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]);
 
+        bool sign = (moveVect[0] >= 0.0f);
+
         float theta = atan(moveVect[1] / moveVect[0]);
 
         moveVect[0] = 0.89 * cos(theta);
         moveVect[1] = 0.89 * sin(theta);
 
-        IMUComm.azimuth = atan(moveVect[0] / 21.4f);
-        IMUComm.elevation = atan(moveVect[1] / 21.4f);
+        IMUComm.azimuth = (sign) ? atan(moveVect[0] / 21.4f) * 180 / PI : -1.0f * atan(moveVect[0] / 21.4f) * 180 / PI;
+        IMUComm.elevation = atan(moveVect[1] / 21.4f) * 180 / PI;
         IMUComm.heading = 0.0f;
         IMUComm.pitch = 0.0f;
         IMUComm.roll = 0.0f;
 
-        sendIMUComm();
+        auto end = std::chrono::high_resolution_clock::now();
+
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        std::cout << "Execution time: " duration.count() << std::endl;
+
+        // sendIMUComm();
+
+        std::cout << "Sent: " << IMUComm.azimuth << "," << IMUComm.elevation << "," << IMUComm.heading << "," << IMUComm.pitch << "," << IMUComm.roll << "," << std::endl;
 
         // float tempx = sqrt(moveVect[0] * moveVect[0] + moveVect[1] * moveVect[1]);
 
@@ -367,7 +380,7 @@ int main()
     }
 
     // Initialize serial communication to the motor controllers
-    motorControllerFd = serialOpen("/dev/ttyACM0", 115200);
+    // motorControllerFd = serialOpen("/dev/ttyACM0", 115200);
     if (motorControllerFd == -1)
     {
         std::cerr << "Unable to initialize serial communication with gimbal controller. Please check serial port being used..." << std::endl;
@@ -384,7 +397,7 @@ int main()
     t_photodiode.join();
     // t_imgProc.join();
 
-    close(motorControllerFd);
+    // close(motorControllerFd);
 
     return 0;
 }
