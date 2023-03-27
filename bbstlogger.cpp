@@ -400,7 +400,7 @@ int main()
     t_photodiode.join();
     // t_imgProc.join();
 
-    close(motorControllerFd);
+    serialClose(motorControllerFd);
 
     return 0;
 }
