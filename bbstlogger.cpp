@@ -280,9 +280,7 @@ void photodiodeThread()
     ads.begin();
 
     int i = 0, norm = 0;
-    int centerX = ceil(PHOTODIODE_ARRAY_X / 2), centerY = ceil(PHOTODIODE_ARRAY_Y / 2);
     uint16_t value = 0x0000;
-    //uint16_t maxVal1 = 0x0000, maxVal2 = 0x0000, value = 0x0000;
     std::vector<int> maxVal1{0, 0, 0}, maxVal2{0, 0, 0};
     std::vector<int> moveVect{0, 0};
     while (1)
@@ -335,8 +333,8 @@ void photodiodeThread()
             }
         }
 
-        moveVect[0] = (maxVal1[0] - centerX) * maxVal1[2] + (maxVal2[0] - centerX) * maxVal2[2];
-        moveVect[1] = (-1 * maxVal1[1] - centerY) * maxVal1[2] + (-1 * maxVal2[1] - centerY) * maxVal2[2];
+        moveVect[0] = maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2];
+        moveVect[1] = maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2];
 
         double temp = tan(moveVect[1] / moveVect[0]);
 
