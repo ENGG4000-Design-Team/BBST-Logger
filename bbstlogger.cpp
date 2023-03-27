@@ -65,7 +65,7 @@ struct
 void sendIMUComm(int controllerFd)
 {
     int i;
-    /*for (i = 0; i < sizeof(float); i++)
+    for (i = 0; i < sizeof(float); i++)
         serialPutchar(controllerFd, IMUComm.azimuthBuff[i]);
 
     serialPutchar(controllerFd, ',');
@@ -73,7 +73,7 @@ void sendIMUComm(int controllerFd)
     for (i = 0; i < sizeof(float); i++)
         serialPutchar(controllerFd, IMUComm.elevationBuff[i]);
 
-    serialPutchar(controllerFd, ',');*/
+    serialPutchar(controllerFd, ',');
 
     for (i = 0; i < sizeof(float); i++)
         serialPutchar(controllerFd, IMUComm.headingBuff[i]);
@@ -160,8 +160,11 @@ void IMUThread()
 
         // Read data from IMU and store in IMUComm structure
         IMUComm.heading = imu->getHeading();
+        IMUComm.heading = (IMUComm.heading != 0.0f) ? IMUComm.heading : 0.1f;
         IMUComm.pitch = imu->getPitch();
+        IMUComm.pitch = (IMUComm.pitch != 0.0f) ? IMUComm.pitch : 0.1f;
         IMUComm.roll = imu->getRoll();
+        IMUComm.roll = (IMUComm.roll != 0.0f) ? IMUComm.roll : 0.1f;
 
         sendIMUComm(controllerFd);
 
@@ -172,13 +175,13 @@ void IMUThread()
         data[3] = "IMU Pitch: " + std::to_string(IMUComm.pitch);
         data[4] = "IMU Roll: " + std::to_string(IMUComm.roll);
 
-        std::cout << "Sent: " << IMUComm.heading << ", " << IMUComm.pitch << ", " << IMUComm.roll << std::endl;
+        std::cout << "Sent: " << IMUComm.azimuth << ", " << IMUComm.elevation << ", " << IMUComm.heading << ", " << IMUComm.pitch << ", " << IMUComm.roll << std::endl;
 
         // Log data to logfile
         // logfileWrite(data);
 
         // TODO: Experimentally determine lower limit on delay between loops
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 
     // TODO: Need to close this in a signal handler since
