@@ -339,6 +339,8 @@ void photodiodeThread()
         float tempX = (sign) ? 1.5 * atan(moveVect[0] / 21.4f) * 180 / PI : -1.5f * atan(moveVect[0] / 21.4f) * 180 / PI;
         float tempY = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
 
+        std::cout << tempX << ", " << tempY << std::endl;
+
         IMUComm.azimuth = 181 + tempX;
         IMUComm.elevation = 41 + tempY;
         IMUComm.heading = 0.1f;
