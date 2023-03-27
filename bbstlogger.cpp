@@ -181,11 +181,11 @@ void IMUThread()
         prevRoll = IMUComm.roll;
 
         // Generate the data array to send to log file
-        //data[0] = "Sun Azimuth: " + std::to_string(IMUComm.azimuth);
-        //data[1] = "Sun Elevation: " + std::to_string(IMUComm.elevation);
-        //data[2] = "IMU Heading: " + std::to_string(IMUComm.heading);
-        //data[3] = "IMU Pitch: " + std::to_string(IMUComm.pitch);
-        //data[4] = "IMU Roll: " + std::to_string(IMUComm.roll);
+        // data[0] = "Sun Azimuth: " + std::to_string(IMUComm.azimuth);
+        // data[1] = "Sun Elevation: " + std::to_string(IMUComm.elevation);
+        // data[2] = "IMU Heading: " + std::to_string(IMUComm.heading);
+        // data[3] = "IMU Pitch: " + std::to_string(IMUComm.pitch);
+        // data[4] = "IMU Roll: " + std::to_string(IMUComm.roll);
 
         std::cout << "Sent: " << IMUComm.azimuth << ", " << IMUComm.elevation << ", " << IMUComm.heading << ", " << IMUComm.pitch << ", " << IMUComm.roll << std::endl;
 
@@ -205,6 +205,7 @@ void photodiodeThread()
 {
     const int PHOTODIODE_ARRAY_X = 5;
     const int PHOTODIODE_ARRAY_Y = 5;
+    const int NPHOTODIODES = 8;
 
     // GPIO pins we are using to control multiplexer channels
     int pins[4] = {1, 2, 3, 4};
@@ -241,6 +242,18 @@ void photodiodeThread()
         {0x0000, 0x0000, 0x0000, 0x0000, 0x0000},
         {0x0000, 0x0000, 0x0000, 0x0000, 0x0000}};
 
+    // Store photodiode values for finding max and min
+    uint16_t photodiodeValues[NPHOTODIODES] = {
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+    };
+
     // Setup GPIO pins used for selecting mux channels
     for (const auto &pin : pins)
     {
@@ -252,11 +265,13 @@ void photodiodeThread()
     ads.setGain(GAIN_ONE);
     ads.begin();
 
-    uint16_t maxVal = 0x0000;
+    int i = 0, norm = 0;
+    uint16_t maxVal = 0x0000, value = 0x0000;
     std::vector<int> maxPos{0, 0};
     std::vector<int> moveVect{0, 0};
     while (1)
     {
+        i = 0;
         for (const auto &[key, val] : photodiodeIdx)
         {
             // Write key to GPIO pins to select particular photodiode
@@ -269,13 +284,39 @@ void photodiodeThread()
             // Sleep for 1ms for good measuer
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-            // Read value from adc and store in photodiodes matrix
+            // Read value from adc
             // TODO: Double check all values are coming from A0,
             // or else we need to keep track of that too
-            photodiodes[val[0]][val[1]] = ads.readADC_SingleEnded(0);
+            value = ads.readADC_SingleEnded(0);
+
+            // Store value in photodiodes matrix
+            photodiodes[val[0]][val[1]] = value;
+
+            // Store value in photodiode value array
+            photodiodeValues[i++] = value;
         }
 
+        // Normalize by taking the average of weakest half photodiodes
+        // and subtracting that value from each photodiode intensity
+        norm = 0;
+        std::sort(photodiodeValues, photodiodeValues + NPHOTODIODES);
+        for (int j = 0; j < NPHOTODIODES / 2; j++)
+        {
+            norm += photodiodeValues[j];
+        }
+
+        norm /= (NPHOTODIODES / 2);
+
+        for (auto &[key, val] : photodiodeIdx)
+        {
+            photodiodes[val[0]][val[1]] -= norm;
+        }
+
+        // TODO: We might be able to rewrite the below function
+        // now that we have the sorted array of intensities
+
         // Find maximum photodiode value and its index in array
+        maxVal = 0x0000;
         for (int i = 0; i < PHOTODIODE_ARRAY_Y; i++)
         {
             auto rowMax = std::max_element(photodiodes[i], photodiodes[i] + PHOTODIODE_ARRAY_X);
@@ -314,13 +355,13 @@ int main()
     }
 
     // Launch threads
-    std::thread t_imu(IMUThread);
-    // std::thread t_photodiode(photodiodeThread);
+    // std::thread t_imu(IMUThread);
+    std::thread t_photodiode(photodiodeThread);
     // std::thread t_imgProc(imgProcThread);
 
     // Join threads
-    t_imu.join();
-    // t_photodiode.join();
+    // t_imu.join();
+    t_photodiode.join();
     // t_imgProc.join();
 
     return 0;
