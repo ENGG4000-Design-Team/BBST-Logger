@@ -266,8 +266,9 @@ void photodiodeThread()
     ads.begin();
 
     int i = 0, norm = 0;
-    uint16_t maxVal = 0x0000, value = 0x0000;
-    std::vector<int> maxPos{0, 0};
+    int centerX = ceil(PHOTODIODE_ARRAY_X / 2), centerY = ceil(PHOTODIODE_ARRAY_Y / 2);
+    uint16_t maxVal1 = 0x0000, maxVal2 = 0x0000, value = 0x0000;
+    std::vector<int> maxPos1{0, 0}, maxPos2{0, 0};
     std::vector<int> moveVect{0, 0};
     while (1)
     {
@@ -300,9 +301,9 @@ void photodiodeThread()
         // and subtracting that value from each photodiode intensity
         norm = 0;
         std::sort(photodiodeValues, photodiodeValues + NPHOTODIODES);
-        for (int j = 0; j < NPHOTODIODES / 2; j++)
+        for (i = 0; i < NPHOTODIODES / 2; i++)
         {
-            norm += photodiodeValues[j];
+            norm += photodiodeValues[i];
         }
 
         norm /= (NPHOTODIODES / 2);
@@ -315,25 +316,40 @@ void photodiodeThread()
         // TODO: We might be able to rewrite the below function
         // now that we have the sorted array of intensities
 
-        // Find maximum photodiode value and its index in array
-        maxVal = 0x0000;
-        for (int i = 0; i < PHOTODIODE_ARRAY_Y; i++)
+        // Find two maximum photodiode values and their indicies in array
+        maxVal1 = 0x0000;
+        maxVal2 = 0x0000;
+        for (i = 0; i < PHOTODIODE_ARRAY_Y; i++)
         {
             auto rowMax = std::max_element(photodiodes[i], photodiodes[i] + PHOTODIODE_ARRAY_X);
-            if (*rowMax > maxVal)
+            if (*rowMax > maxVal1)
             {
-                maxPos[0] = i;
-                maxPos[1] = std::distance(photodiodes[i], rowMax);
-                maxVal = *rowMax;
+                maxVal2 = maxVal1;
+                maxPos2[0] = maxPos1[0];
+                maxPos2[1] = maxPos1[1];
+
+                maxPos1[0] = std::distance(photodiodes[i], rowMax);
+                maxPos1[1] = i;
+                maxVal1 = *rowMax;
+            }
+            else if (*rowMax > maxVal2)
+            {
+                maxPos2[0] = std::distance(photodiodes[i], rowMax);
+                maxPos2[1] = i;
+                maxVal2 = *rowMax;
             }
         }
 
-        // Multiply by -1 so up is positive and down is negative.
-        moveVect[0] = maxPos[1] - ceil(PHOTODIODE_ARRAY_X / 2);
-        moveVect[1] = -1 * (maxPos[0] - ceil(PHOTODIODE_ARRAY_Y / 2));
+        moveVect[0] = (maxPos1[0] - centerX) * maxVal1 + (maxPos2[0] - centerX) * maxVal2;
+        moveVect[1] = (-1 * maxPos1[1] - centerY) * maxVal1 + (-1 * maxPos2[1] - centerY) * maxVal2;
 
-        std::cout << "Max Photodiode at " << maxPos[0] << ", " << maxPos[1] << " intensity: " << maxVal << std::endl;
-        std::cout << "Vector to center: " << moveVect[0] << ", " << moveVect[1] << std::endl;
+        double temp = tan(moveVect[1]/moveVect[0]);
+
+        std::cout << "Max1 " << maxPos1[0] << "," << maxPos1[1] << ": " << maxVal1 << std::endl;
+        std::cout << "Max2 " << maxPos2[0] << "," << maxPos2[1] << ": " << maxVal2 << std::endl;
+        std::cout << "Heading correction: " << temp << std::endl;
+        // std::cout << "Max Photodiode at " << maxPos[0] << ", " << maxPos[1] << " intensity: " << maxVal << std::endl;
+        // std::cout << "Vector to center: " << moveVect[0] << ", " << moveVect[1] << std::endl;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
