@@ -371,7 +371,7 @@ int main()
     if (motorControllerFd == -1)
     {
         std::cerr << "Unable to initialize serial communication with gimbal controller. Please check serial port being used..." << std::endl;
-        return;
+        return 1;
     }
 
     // Launch threads
