@@ -288,7 +288,7 @@ void photodiodeThread()
     while (1)
     {
         i = 0;
-        for (const auto &[key, val] : photodiodes)
+        for (auto &[key, val] : photodiodes)
         {
             // Write key to GPIO pins to select particular photodiode
             for (int i = 0; i < 4; i++)
