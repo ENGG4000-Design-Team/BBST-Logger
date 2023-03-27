@@ -27,6 +27,7 @@
 
 const std::string LOGFILE = "log.csv";
 std::mutex m_logfile;
+int motorControllerFd;
 
 // Structure that represents the bytes being sent to the
 // motor controllers from IMU data.
@@ -62,33 +63,35 @@ struct
 // Send data stored in IMUComm to motor controller by
 // by sending each float byte by byte. Each float will be
 // separated by a comma in the communication stream.
-void sendIMUComm(int controllerFd)
+void sendIMUComm()
 {
     int i;
     for (i = 0; i < sizeof(float); i++)
-        serialPutchar(controllerFd, IMUComm.azimuthBuff[i]);
+        serialPutchar(motorControllerFd, IMUComm.azimuthBuff[i]);
 
-    serialPutchar(controllerFd, ',');
-
-    for (i = 0; i < sizeof(float); i++)
-        serialPutchar(controllerFd, IMUComm.elevationBuff[i]);
-
-    serialPutchar(controllerFd, ',');
+    serialPutchar(motorControllerFd, ',');
 
     for (i = 0; i < sizeof(float); i++)
-        serialPutchar(controllerFd, IMUComm.headingBuff[i]);
+        serialPutchar(motorControllerFd, IMUComm.elevationBuff[i]);
 
-    serialPutchar(controllerFd, ',');
-
-    for (i = 0; i < sizeof(float); i++)
-        serialPutchar(controllerFd, IMUComm.pitchBuff[i]);
-
-    serialPutchar(controllerFd, ',');
+    serialPutchar(motorControllerFd, ',');
 
     for (i = 0; i < sizeof(float); i++)
-        serialPutchar(controllerFd, IMUComm.rollBuff[i]);
+        serialPutchar(motorControllerFd, IMUComm.headingBuff[i]);
 
-    serialPutchar(controllerFd, ',');
+    serialPutchar(motorControllerFd, ',');
+
+    for (i = 0; i < sizeof(float); i++)
+        serialPutchar(motorControllerFd, IMUComm.pitchBuff[i]);
+
+    serialPutchar(motorControllerFd, ',');
+
+    for (i = 0; i < sizeof(float); i++)
+        serialPutchar(motorControllerFd, IMUComm.rollBuff[i]);
+
+    serialPutchar(motorControllerFd, ',');
+
+    std::cout << "Sent: " << IMUComm.azimuth << "," << IMUComm.elevation << "," << IMUComm.heading << "," << IMUComm.pitch << "," << IMUComm.roll << "," << std::endl;
 }
 
 // Write a vector of data to logfile as a comma separated line
@@ -140,14 +143,6 @@ void IMUThread()
               << "\tAccelerometer: " << calStatus[1] << std::endl
               << "\tMagnotometer: " << calStatus[0] << std::endl;
 
-    // Initialize serial communication to the motor controllers
-    int controllerFd = serialOpen("/dev/ttyACM0", 115200);
-    if (controllerFd == -1)
-    {
-        std::cerr << "Unable to initialize serial communication with gimbal controller. Please check serial port being used..." << std::endl;
-        return;
-    }
-
     // Main IMU loop
     // TODO: During flight these position values will change on each iteration
     float latitude = 45.944962483507844;
@@ -174,7 +169,7 @@ void IMUThread()
         IMUComm.roll = (IMUComm.roll != 0.0f) ? IMUComm.roll : 0.1f;
         IMUComm.roll = (prevRoll != 0.0f) ? 0.8 * IMUComm.roll + 0.2 * prevRoll : IMUComm.roll;
 
-        sendIMUComm(controllerFd);
+        sendIMUComm();
 
         prevHeading = IMUComm.heading;
         prevPitch = IMUComm.pitch;
@@ -187,18 +182,12 @@ void IMUThread()
         // data[3] = "IMU Pitch: " + std::to_string(IMUComm.pitch);
         // data[4] = "IMU Roll: " + std::to_string(IMUComm.roll);
 
-        std::cout << "Sent: " << IMUComm.azimuth << ", " << IMUComm.elevation << ", " << IMUComm.heading << ", " << IMUComm.pitch << ", " << IMUComm.roll << std::endl;
-
         // Log data to logfile
         // logfileWrite(data);
 
         // TODO: Experimentally determine lower limit on delay between loops
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
-
-    // TODO: Need to close this in a signal handler since
-    // this is never reached...
-    serialClose(controllerFd);
 }
 
 void photodiodeThread()
@@ -341,10 +330,13 @@ void photodiodeThread()
         moveVect[0] = 0.89 * cos(theta);
         moveVect[1] = 0.89 * sin(theta);
 
-        float tempX = atan(moveVect[0] / 21.4f);
-        float tempY = atan(moveVect[1] / 21.4f);
+        IMUComm.azimuth = atan(moveVect[0] / 21.4f);
+        IMUComm.elevation = atan(moveVect[1] / 21.4f);
+        IMUComm.heading = 0.0f;
+        IMUComm.pitch = 0.0f;
+        IMUComm.roll = 0.0f;
 
-        std::cout << "TempX: " << tempX << ", TempY: " << tempY << std::endl;
+        sendIMUComm();
 
         // float tempx = sqrt(moveVect[0] * moveVect[0] + moveVect[1] * moveVect[1]);
 
@@ -374,6 +366,14 @@ int main()
         return 1;
     }
 
+    // Initialize serial communication to the motor controllers
+    motorControllerFd = serialOpen("/dev/ttyACM0", 115200);
+    if (motorControllerFd == -1)
+    {
+        std::cerr << "Unable to initialize serial communication with gimbal controller. Please check serial port being used..." << std::endl;
+        return;
+    }
+
     // Launch threads
     // std::thread t_imu(IMUThread);
     std::thread t_photodiode(photodiodeThread);
@@ -383,6 +383,8 @@ int main()
     // t_imu.join();
     t_photodiode.join();
     // t_imgProc.join();
+
+    close(motorControllerFd);
 
     return 0;
 }
