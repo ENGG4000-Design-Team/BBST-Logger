@@ -336,20 +336,23 @@ void photodiodeThread()
         moveVect[0] = 0.89 * cos(theta);
         moveVect[1] = 0.89 * sin(theta);
 
-        IMUComm.azimuth = (sign) ? atan(moveVect[0] / 21.4f) * 180 / PI : -1.0f * atan(moveVect[0] / 21.4f) * 180 / PI;
-        IMUComm.elevation = atan(moveVect[1] / 21.4f) * 180 / PI;
+        float tempX = (sign) ? 1.5 * atan(moveVect[0] / 21.4f) * 180 / PI : -1.5f * atan(moveVect[0] / 21.4f) * 180 / PI;
+        float tempY = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
+
+        IMUComm.azimuth = 1 + tempX;
+        IMUComm.elevation = 41 + tempY;
         IMUComm.heading = 0.0f;
         IMUComm.pitch = 0.0f;
         IMUComm.roll = 0.0f;
 
         auto end = std::chrono::high_resolution_clock::now();
 
+        sendIMUComm();
+
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         std::cout << "Execution time: " << duration.count() << std::endl;
 
-        // sendIMUComm();
-
-        std::cout << "Sent: " << IMUComm.azimuth << "," << IMUComm.elevation << "," << IMUComm.heading << "," << IMUComm.pitch << "," << IMUComm.roll << "," << std::endl;
+        // std::cout << "Sent: " << IMUComm.azimuth << "," << IMUComm.elevation << "," << IMUComm.heading << "," << IMUComm.pitch << "," << IMUComm.roll << "," << std::endl;
 
         // float tempx = sqrt(moveVect[0] * moveVect[0] + moveVect[1] * moveVect[1]);
 
@@ -380,7 +383,7 @@ int main()
     }
 
     // Initialize serial communication to the motor controllers
-    // motorControllerFd = serialOpen("/dev/ttyACM0", 115200);
+    motorControllerFd = serialOpen("/dev/ttyACM0", 115200);
     if (motorControllerFd == -1)
     {
         std::cerr << "Unable to initialize serial communication with gimbal controller. Please check serial port being used..." << std::endl;
@@ -397,7 +400,7 @@ int main()
     t_photodiode.join();
     // t_imgProc.join();
 
-    // close(motorControllerFd);
+    close(motorControllerFd);
 
     return 0;
 }
