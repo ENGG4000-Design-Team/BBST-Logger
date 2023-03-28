@@ -329,14 +329,14 @@ void photodiodeThread()
         moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]);
         moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]);
 
-        bool sign = (moveVect[0] >= 0.0f);
+        float theta = atan2(moveVect[1], moveVect[0]);
 
-        float theta = atan(moveVect[1] / moveVect[0]);
+        std::cout << theta * (180/PI) << std::endl;
 
         moveVect[0] = 0.89 * cos(theta);
         moveVect[1] = 0.89 * sin(theta);
 
-        float tempX = (sign) ? 1.5 * atan(moveVect[0] / 21.4f) * 180 / PI : -1.5f * atan(moveVect[0] / 21.4f) * 180 / PI;
+        float tempX = 1.5 * atan(moveVect[0] / 21.4f) * 180 / PI;
         float tempY = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
 
         std::cout << tempX << ", " << tempY << std::endl;
