@@ -327,6 +327,9 @@ void photodiodeThread()
             }
         }
 
+        // TODO: Store prev location and if it is the same
+        // do not send data.
+
         xCorrection = 0.0f;
         yCorrection = 0.0f;
         magnitude = sqrt(maxVal1[2] * maxVal1[2] + maxVal2[2] * maxVal2[2]);
@@ -346,26 +349,19 @@ void photodiodeThread()
             yCorrection = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
 
             std::cout << xCorrection << ", " << yCorrection << std::endl;
-        }
-        else
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
 
-        IMUComm.azimuth = 181.0f - xCorrection;
-        IMUComm.elevation = 41.0f - yCorrection;
-        IMUComm.heading = 0.1f;
-        IMUComm.pitch = 0.1f;
-        IMUComm.roll = 0.1f;
+            IMUComm.azimuth = 181.0f - xCorrection;
+            IMUComm.elevation = 41.0f - yCorrection;
+            IMUComm.heading = 0.1f;
+            IMUComm.pitch = 0.1f;
+            IMUComm.roll = 0.1f;
+
+            sendIMUComm();
+        }
 
         auto end = std::chrono::high_resolution_clock::now();
-
-        sendIMUComm();
-
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         std::cout << "Execution time: " << duration.count() << std::endl;
-
-        // std::cout << "Sent: " << IMUComm.azimuth << "," << IMUComm.elevation << "," << IMUComm.heading << "," << IMUComm.pitch << "," << IMUComm.roll << "," << std::endl;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(40));
     }
