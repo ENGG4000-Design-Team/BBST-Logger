@@ -330,7 +330,7 @@ void photodiodeThread()
         xCorrection = 0.0f;
         yCorrection = 0.0f;
         magnitude = sqrt(maxVal1[2] * maxVal1[2] + maxVal2[2] * maxVal2[2]);
-        if (magnitude > norm + 10.0f)
+        if (magnitude > 3.0f)
         {
             moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]);
             moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]);
@@ -348,8 +348,8 @@ void photodiodeThread()
             std::cout << xCorrection << ", " << yCorrection << std::endl;
         }
 
-        IMUComm.azimuth = 181 + xCorrection;
-        IMUComm.elevation = 41 - yCorrection;
+        IMUComm.azimuth = 181.0f + xCorrection;
+        IMUComm.elevation = 41.0f - yCorrection;
         IMUComm.heading = 0.1f;
         IMUComm.pitch = 0.1f;
         IMUComm.roll = 0.1f;
