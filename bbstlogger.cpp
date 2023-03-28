@@ -270,7 +270,8 @@ void photodiodeThread()
     ads.setGain(GAIN_ONE);
     ads.begin();
 
-    int i = 0, norm = 0;
+    int i = 0;
+    float norm = 0.0f, magnitude = 0.0f, xCorrection = 0.0f, yCorrection = 0.0f;
     uint16_t value = 0x0000;
     std::vector<int> maxVal1{0, 0, 0}, maxVal2{0, 0, 0};
     std::vector<float> moveVect{0, 0};
@@ -300,7 +301,7 @@ void photodiodeThread()
 
         // Normalize by taking the average of weakest half photodiodes
         // and subtracting that value from each photodiode intensity
-        norm = 0;
+        norm = 0.0;
         std::sort(photodiodeValues, photodiodeValues + NPHOTODIODES);
         for (i = 0; i < NPHOTODIODES / 2; i++)
         {
@@ -326,23 +327,29 @@ void photodiodeThread()
             }
         }
 
-        moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]);
-        moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]);
+        xCorrection = 0.0f;
+        yCorrection = 0.0f;
+        magnitude = sqrt(maxVal1[2] * maxVal1[2] + maxVal2[2] * maxVal2[2]);
+        if (magnitude > norm + 10.0f;)
+        {
+            moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]);
+            moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]);
 
-        float theta = atan2(moveVect[1], moveVect[0]);
+            float theta = atan2(moveVect[1], moveVect[0]);
 
-        std::cout << theta * (180/PI) << std::endl;
+            std::cout << theta * (180 / PI) << std::endl;
 
-        moveVect[0] = 0.89 * cos(theta);
-        moveVect[1] = 0.89 * sin(theta);
+            moveVect[0] = 0.89 * cos(theta);
+            moveVect[1] = 0.89 * sin(theta);
 
-        float tempX = 1.5 * atan(moveVect[0] / 21.4f) * 180 / PI;
-        float tempY = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
+            xCorrection = 1.5 * atan(moveVect[0] / 21.4f) * 180 / PI;
+            yCorrection = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
 
-        std::cout << tempX << ", " << tempY << std::endl;
+            std::cout << xCorrection << ", " << yCorrection << std::endl;
+        }
 
-        IMUComm.azimuth = 181 + tempX;
-        IMUComm.elevation = 41 - tempY;
+        IMUComm.azimuth = 181 + xCorrection;
+        IMUComm.elevation = 41 - yCorrection;
         IMUComm.heading = 0.1f;
         IMUComm.pitch = 0.1f;
         IMUComm.roll = 0.1f;
@@ -355,15 +362,6 @@ void photodiodeThread()
         std::cout << "Execution time: " << duration.count() << std::endl;
 
         // std::cout << "Sent: " << IMUComm.azimuth << "," << IMUComm.elevation << "," << IMUComm.heading << "," << IMUComm.pitch << "," << IMUComm.roll << "," << std::endl;
-
-        // float tempx = sqrt(moveVect[0] * moveVect[0] + moveVect[1] * moveVect[1]);
-
-        // std::cout << "Max1 " << maxVal1[0] << "," << maxVal1[1] << ": " << maxVal1[2] << std::endl;
-        // std::cout << "Max2 " << maxVal2[0] << "," << maxVal2[1] << ": " << maxVal2[2] << std::endl;
-        // std::cout << "Move Vect: " << moveVect[0] << ", " << moveVect[1] << std::endl;
-        // std::cout << "Heading correction: " << temp << std::endl;
-        //  std::cout << "Max Photodiode at " << maxPos[0] << ", " << maxPos[1] << " intensity: " << maxVal << std::endl;
-        //  std::cout << "Vector to center: " << moveVect[0] << ", " << moveVect[1] << std::endl;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
