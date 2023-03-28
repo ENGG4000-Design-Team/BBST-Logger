@@ -349,15 +349,15 @@ void photodiodeThread()
             yCorrection = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
 
             std::cout << xCorrection << ", " << yCorrection << std::endl;
-
-            IMUComm.azimuth = 181.0f - xCorrection;
-            IMUComm.elevation = 41.0f - yCorrection;
-            IMUComm.heading = 0.1f;
-            IMUComm.pitch = 0.1f;
-            IMUComm.roll = 0.1f;
-
-            sendIMUComm();
         }
+
+        IMUComm.azimuth = 181.0f - xCorrection;
+        IMUComm.elevation = 41.0f - yCorrection;
+        IMUComm.heading = 0.1f;
+        IMUComm.pitch = 0.1f;
+        IMUComm.roll = 0.1f;
+
+        sendIMUComm();
 
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
