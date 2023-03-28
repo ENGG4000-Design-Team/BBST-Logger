@@ -342,7 +342,7 @@ void photodiodeThread()
         std::cout << tempX << ", " << tempY << std::endl;
 
         IMUComm.azimuth = 181 + tempX;
-        IMUComm.elevation = 41 + tempY;
+        IMUComm.elevation = 41 - tempY;
         IMUComm.heading = 0.1f;
         IMUComm.pitch = 0.1f;
         IMUComm.roll = 0.1f;
