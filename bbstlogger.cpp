@@ -348,7 +348,7 @@ void photodiodeThread()
             std::cout << xCorrection << ", " << yCorrection << std::endl;
         }
 
-        IMUComm.azimuth = 181.0f + xCorrection;
+        IMUComm.azimuth = 181.0f - xCorrection;
         IMUComm.elevation = 41.0f - yCorrection;
         IMUComm.heading = 0.1f;
         IMUComm.pitch = 0.1f;
