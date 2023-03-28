@@ -330,7 +330,7 @@ void photodiodeThread()
         xCorrection = 0.0f;
         yCorrection = 0.0f;
         magnitude = sqrt(maxVal1[2] * maxVal1[2] + maxVal2[2] * maxVal2[2]);
-        if (magnitude > norm + 10.0f;)
+        if (magnitude > norm + 10.0f)
         {
             moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]);
             moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]);
