@@ -330,7 +330,7 @@ void photodiodeThread()
         xCorrection = 0.0f;
         yCorrection = 0.0f;
         magnitude = sqrt(maxVal1[2] * maxVal1[2] + maxVal2[2] * maxVal2[2]);
-        if (magnitude > 3.0f)
+        if (magnitude > 2.5f)
         {
             moveVect[0] = static_cast<float>(maxVal1[0] * maxVal1[2] + maxVal2[0] * maxVal2[2]);
             moveVect[1] = static_cast<float>(maxVal1[1] * maxVal1[2] + maxVal2[1] * maxVal2[2]);
@@ -346,6 +346,10 @@ void photodiodeThread()
             yCorrection = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
 
             std::cout << xCorrection << ", " << yCorrection << std::endl;
+        }
+        else
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
 
         IMUComm.azimuth = 181.0f - xCorrection;
@@ -363,7 +367,7 @@ void photodiodeThread()
 
         // std::cout << "Sent: " << IMUComm.azimuth << "," << IMUComm.elevation << "," << IMUComm.heading << "," << IMUComm.pitch << "," << IMUComm.roll << "," << std::endl;
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(40));
     }
 }
 
