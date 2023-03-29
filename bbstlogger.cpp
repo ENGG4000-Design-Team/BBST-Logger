@@ -299,7 +299,8 @@ void photodiodeThread()
     ads.begin();
 
     int i = 0;
-    float norm = 0.0f, magnitude = 0.0f, xCorrection = 0.0f, yCorrection = 0.0f;
+    float norm = 0.0f, magnitude = 0.0f;
+    float xCorrection = 0.0f, prevXCorrection = 0.0f, yCorrection = 0.0f, prevYCorrection = 0.0f;
     uint16_t value = 0x0000;
     std::vector<int> maxVal1{0, 0, 0}, maxVal2{0, 0, 0};
     std::vector<float> moveVect{0, 0};
@@ -373,14 +374,17 @@ void photodiodeThread()
             moveVect[0] = 0.89 * cos(theta);
             moveVect[1] = 0.89 * sin(theta);
 
-            xCorrection = 1.5 * atan(moveVect[0] / 21.4f) * 180 / PI;
-            yCorrection = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
+            xCorrection = 1.9 * atan(moveVect[0] / 21.4f) * 180 / PI;
+            yCorrection = 1.9 * atan(moveVect[1] / 21.4f) * 180 / PI;
 
             std::cout << xCorrection << ", " << yCorrection << std::endl;
+
+            prevXCorrection = xCorrection;
+            prevYCorrection = yCorrection
         }
 
-        IMUComm.azimuth = ceil((181.0f - xCorrection) * 1000.0f) / 1000.0f;
-        IMUComm.elevation = ceil((41.0f - yCorrection) * 1000.0f) / 1000.0f;
+        IMUComm.azimuth = ceil((182.5f - prevXCorrection) * 1000.0f) / 1000.0f;
+        IMUComm.elevation = ceil((41.0f - prevYCorrection) * 1000.0f) / 1000.0f;
         IMUComm.heading = 0.1f;
         IMUComm.pitch = 0.1f;
         IMUComm.roll = 0.1f;
@@ -393,12 +397,6 @@ void photodiodeThread()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(40));
     }
-}
-
-void imgProcThread()
-{
-    std::vector<std::string> data{"to the right", "below", "up"};
-    logfileWrite(data);
 }
 
 int main()
@@ -418,15 +416,16 @@ int main()
         return 1;
     }
 
+    // TODO: Chose IMU or Photodiode test
+    // based on cmd argument
+
     // Launch threads
     // std::thread t_imu(IMUThread);
     std::thread t_photodiode(photodiodeThread);
-    // std::thread t_imgProc(imgProcThread);
 
     // Join threads
     // t_imu.join();
     t_photodiode.join();
-    // t_imgProc.join();
 
     serialClose(motorControllerFd);
 
