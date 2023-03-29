@@ -396,8 +396,8 @@ int main()
     // std::thread t_imgProc(imgProcThread);
 
     // Join threads
-    // t_imu.join();
-    t_photodiode.join();
+    t_imu.join();
+    // t_photodiode.join();
     // t_imgProc.join();
 
     serialClose(motorControllerFd);
