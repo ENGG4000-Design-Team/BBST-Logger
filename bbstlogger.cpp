@@ -169,7 +169,7 @@ void IMUThread()
         auto start = std::chrono::high_resolution_clock::now();
 
         // Calculate location of Sun at current point in time
-        calcSunPos(IMUComm.elevation, IMUComm.azimuth, longitude, la\titude);
+        calcSunPos(IMUComm.elevation, IMUComm.azimuth, longitude, latitude);
 
         // IMUComm.azimuth = 3400.f;
         // IMUComm.elevation = 29.0f;
