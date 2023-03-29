@@ -69,15 +69,15 @@ struct
 void sendIMUComm()
 {
     uint8_t delim[1] = {','};
-    write(motorControllerFd, IMUComm.azimuthBuff, sizoef(float));
+    write(motorControllerFd, IMUComm.azimuthBuff, sizeof(float));
     write(motorControllerFd, delim, 1);
-    write(motorControllerFd, IMUComm.elevationBuff, sizoef(float));
+    write(motorControllerFd, IMUComm.elevationBuff, sizeof(float));
     write(motorControllerFd, delim, 1);
-    write(motorControllerFd, IMUComm.headingBuff, sizoef(float));
+    write(motorControllerFd, IMUComm.headingBuff, sizeof(float));
     write(motorControllerFd, delim, 1);
-    write(motorControllerFd, IMUComm.pitchBuff, sizoef(float));
+    write(motorControllerFd, IMUComm.pitchBuff, sizeof(float));
     write(motorControllerFd, delim, 1);
-    write(motorControllerFd, IMUComm.rollBuff, sizoef(float));
+    write(motorControllerFd, IMUComm.rollBuff, sizeof(float));
     write(motorControllerFd, delim, 1);
 
     /*int i;
