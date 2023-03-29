@@ -374,13 +374,13 @@ void photodiodeThread()
             moveVect[0] = 0.89 * cos(theta);
             moveVect[1] = 0.89 * sin(theta);
 
-            xCorrection = 1.9 * atan(moveVect[0] / 21.4f) * 180 / PI;
-            yCorrection = 1.9 * atan(moveVect[1] / 21.4f) * 180 / PI;
+            xCorrection = 1.5 * atan(moveVect[0] / 21.4f) * 180 / PI;
+            yCorrection = 1.5 * atan(moveVect[1] / 21.4f) * 180 / PI;
 
             std::cout << xCorrection << ", " << yCorrection << std::endl;
 
-            prevXCorrection = xCorrection;
-            prevYCorrection = yCorrection;
+            prevXCorrection += xCorrection;
+            prevYCorrection += yCorrection;
         }
 
         IMUComm.azimuth = ceil((182.5f - prevXCorrection) * 1000.0f) / 1000.0f;
