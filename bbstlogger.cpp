@@ -380,7 +380,7 @@ void photodiodeThread()
             std::cout << xCorrection << ", " << yCorrection << std::endl;
 
             prevXCorrection = xCorrection;
-            prevYCorrection = yCorrection
+            prevYCorrection = yCorrection;
         }
 
         IMUComm.azimuth = ceil((182.5f - prevXCorrection) * 1000.0f) / 1000.0f;
