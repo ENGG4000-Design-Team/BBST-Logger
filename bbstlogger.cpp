@@ -156,6 +156,9 @@ void IMUThread()
         // Calculate location of Sun at current point in time
         calcSunPos(IMUComm.elevation, IMUComm.azimuth, longitude, latitude);
 
+        IMUComm.elevation = ceil(IMUComm.elevation * 1000.0f) / 1000.0f;
+        IMUComm.azimuth = ceil(IMUComm.azimuth * 1000.0f) / 1000.0f;
+
         // Read data from IMU and store in IMUComm structure
         // Experimenting with a weighted reading based off previous value
         // to provide better smoothing.
