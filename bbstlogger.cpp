@@ -159,15 +159,15 @@ void IMUThread()
         // Read data from IMU and store in IMUComm structure
         // Experimenting with a weighted reading based off previous value
         // to provide better smoothing.
-        IMUComm.heading = imu->getHeading();
+        IMUComm.heading = ceil(imu->getHeading() * 1000.0f) / 1000.0f;
         IMUComm.heading = (IMUComm.heading != 0.0f) ? IMUComm.heading : 0.1f;
         IMUComm.heading = (prevHeading != 0.0f) ? 0.8 * IMUComm.heading + 0.2 * prevHeading : IMUComm.heading;
 
-        IMUComm.pitch = imu->getPitch();
+        IMUComm.pitch = ceil(imu->getPitch() * 1000.0f) / 1000.0f;
         IMUComm.pitch = (IMUComm.pitch != 0.0f) ? IMUComm.pitch : 0.1f;
         IMUComm.pitch = (prevPitch != 0.0f) ? 0.8 * IMUComm.pitch + 0.2 * prevPitch : IMUComm.pitch;
 
-        IMUComm.roll = imu->getRoll();
+        IMUComm.roll = ceil(imu->getRoll() * 1000.0f) / 1000.0f;
         IMUComm.roll = (IMUComm.roll != 0.0f) ? IMUComm.roll : 0.1f;
         IMUComm.roll = (prevRoll != 0.0f) ? 0.8 * IMUComm.roll + 0.2 * prevRoll : IMUComm.roll;
 
@@ -351,8 +351,8 @@ void photodiodeThread()
             std::cout << xCorrection << ", " << yCorrection << std::endl;
         }
 
-        IMUComm.azimuth = 181.0f - xCorrection;
-        IMUComm.elevation = 41.0f - yCorrection;
+        IMUComm.azimuth = ceil((181.0f - xCorrection) * 1000.0f) / 1000.0f;
+        IMUComm.elevation = ceil((41.0f - yCorrection) * 1000.0f) / 1000.0f;
         IMUComm.heading = 0.1f;
         IMUComm.pitch = 0.1f;
         IMUComm.roll = 0.1f;
@@ -391,8 +391,8 @@ int main()
     }
 
     // Launch threads
-    // std::thread t_imu(IMUThread);
-    std::thread t_photodiode(photodiodeThread);
+    std::thread t_imu(IMUThread);
+    // std::thread t_photodiode(photodiodeThread);
     // std::thread t_imgProc(imgProcThread);
 
     // Join threads
