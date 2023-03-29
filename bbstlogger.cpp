@@ -169,10 +169,13 @@ void IMUThread()
         auto start = std::chrono::high_resolution_clock::now();
 
         // Calculate location of Sun at current point in time
-        calcSunPos(IMUComm.elevation, IMUComm.azimuth, longitude, latitude);
+        calcSunPos(IMUComm.elevation, IMUComm.azimuth, longitude, la\titude);
 
-        IMUComm.elevation = ceil(IMUComm.elevation * 1000.0f) / 1000.0f;
+        // IMUComm.azimuth = 3400.f;
+        // IMUComm.elevation = 29.0f;
+
         IMUComm.azimuth = ceil(IMUComm.azimuth * 1000.0f) / 1000.0f;
+        IMUComm.elevation = ceil(IMUComm.elevation * 1000.0f) / 1000.0f;
 
         // Read data from IMU and store in IMUComm structure
         // Experimenting with a weighted reading based off previous value
@@ -416,13 +419,13 @@ int main()
     }
 
     // Launch threads
-    std::thread t_imu(IMUThread);
-    // std::thread t_photodiode(photodiodeThread);
+    // std::thread t_imu(IMUThread);
+    std::thread t_photodiode(photodiodeThread);
     // std::thread t_imgProc(imgProcThread);
 
     // Join threads
-    t_imu.join();
-    // t_photodiode.join();
+    // t_imu.join();
+    t_photodiode.join();
     // t_imgProc.join();
 
     serialClose(motorControllerFd);
