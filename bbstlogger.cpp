@@ -153,6 +153,8 @@ void IMUThread()
     std::vector<std::string> data(5);
     while (1)
     {
+        auto start = std::chrono::high_resolution_clock::now();
+
         // Calculate location of Sun at current point in time
         calcSunPos(IMUComm.elevation, IMUComm.azimuth, longitude, latitude);
 
@@ -162,23 +164,30 @@ void IMUThread()
         // Read data from IMU and store in IMUComm structure
         // Experimenting with a weighted reading based off previous value
         // to provide better smoothing.
-        IMUComm.heading = ceil(imu->getHeading() * 1000.0f) / 1000.0f;
+        IMUComm.heading = imu->getHeading();
         IMUComm.heading = (IMUComm.heading != 0.0f) ? IMUComm.heading : 0.1f;
-        IMUComm.heading = (prevHeading != 0.0f) ? 0.8 * IMUComm.heading + 0.2 * prevHeading : IMUComm.heading;
+        // IMUComm.heading = (prevHeading != 0.0f) ? 0.8 * IMUComm.heading + 0.2 * prevHeading : IMUComm.heading;
+        IMUComm.heading = ceil(IMUComm.heading * 1000.0f) / 1000.0f;
 
-        IMUComm.pitch = ceil(imu->getPitch() * 1000.0f) / 1000.0f;
+        IMUComm.pitch = imu->getPitch();
         IMUComm.pitch = (IMUComm.pitch != 0.0f) ? IMUComm.pitch : 0.1f;
-        IMUComm.pitch = (prevPitch != 0.0f) ? 0.8 * IMUComm.pitch + 0.2 * prevPitch : IMUComm.pitch;
+        // IMUComm.pitch = (prevPitch != 0.0f) ? 0.8 * IMUComm.pitch + 0.2 * prevPitch : IMUComm.pitch;
+        IMUComm.pitch = ceil(IMUComm.pitch * 1000.0f) / 1000.0f;
 
-        IMUComm.roll = ceil(imu->getRoll() * 1000.0f) / 1000.0f;
+        IMUComm.roll = imu->getRoll();
         IMUComm.roll = (IMUComm.roll != 0.0f) ? IMUComm.roll : 0.1f;
-        IMUComm.roll = (prevRoll != 0.0f) ? 0.8 * IMUComm.roll + 0.2 * prevRoll : IMUComm.roll;
+        // IMUComm.roll = (prevRoll != 0.0f) ? 0.8 * IMUComm.roll + 0.2 * prevRoll : IMUComm.roll;
+        IMUComm.roll = ceil(IMUComm.roll * 1000.0f) / 1000.0f;
 
         sendIMUComm();
 
-        prevHeading = IMUComm.heading;
-        prevPitch = IMUComm.pitch;
-        prevRoll = IMUComm.roll;
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        std::cout << "Execution time: " << duration.count() << std::endl;
+
+        // prevHeading = IMUComm.heading;
+        // prevPitch = IMUComm.pitch;
+        // prevRoll = IMUComm.roll;
 
         // Generate the data array to send to log file
         // data[0] = "Sun Azimuth: " + std::to_string(IMUComm.azimuth);
