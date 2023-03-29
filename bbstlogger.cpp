@@ -15,6 +15,7 @@
 #include <mutex>
 #include <chrono>
 #include <ctime>
+#include <unistd.h>
 
 #include <opencv2/opencv.hpp>
 #include <cmps14.hpp>
@@ -67,7 +68,19 @@ struct
 // separated by a comma in the communication stream.
 void sendIMUComm()
 {
-    int i;
+    uint8_t delim[1] = {','};
+    write(motorControllerFd, IMUComm.azimuthBuff, sizoef(float));
+    write(motorControllerFd, delim, 1);
+    write(motorControllerFd, IMUComm.elevationBuff, sizoef(float));
+    write(motorControllerFd, delim, 1);
+    write(motorControllerFd, IMUComm.headingBuff, sizoef(float));
+    write(motorControllerFd, delim, 1);
+    write(motorControllerFd, IMUComm.pitchBuff, sizoef(float));
+    write(motorControllerFd, delim, 1);
+    write(motorControllerFd, IMUComm.rollBuff, sizoef(float));
+    write(motorControllerFd, delim, 1);
+
+    /*int i;
     for (i = 0; i < sizeof(float); i++)
         serialPutchar(motorControllerFd, IMUComm.azimuthBuff[i]);
 
@@ -91,7 +104,7 @@ void sendIMUComm()
     for (i = 0; i < sizeof(float); i++)
         serialPutchar(motorControllerFd, IMUComm.rollBuff[i]);
 
-    serialPutchar(motorControllerFd, ',');
+    serialPutchar(motorControllerFd, ',');*/
 
     std::cout << "Sent: " << IMUComm.azimuth << "," << IMUComm.elevation << "," << IMUComm.heading << "," << IMUComm.pitch << "," << IMUComm.roll << "," << std::endl;
 }
